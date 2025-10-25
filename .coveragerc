@@ -1,0 +1,29 @@
+[run]
+# Set the package/folder to measure. Replace 'your_package' with the folder
+# you want coverage measured for (e.g. 'src' or the top-level package name).
+source = 'aiss'
+
+# Omit test files, virtual envs and generated code
+omit =
+    tests/*
+    */tests/*
+    .venv/*
+    venv/*
+    build/*
+    dist/*
+    */__init__.py
+
+[report]
+# Show missing lines in the report
+show_missing = True
+# Fail if coverage is below this threshold. Set to 0 to disable.
+fail_under = 80
+# Regexes for lines to exclude from consideration (e.g., pragma: no cover)
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+    def __repr__
+
+[html]
+# HTML report output directory
+directory = htmlcov

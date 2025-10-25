@@ -1,0 +1,38 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: "stable"
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+        # Run on all commits (don't skip when no file-level matches)
+        always_run: true
+        # Match all files explicitly to avoid platform-specific path issues
+        files: ".*"
+
+  # Pytest isn't distributed as a pre-commit hook mirror in every setup,
+  # so add a lightweight local hook that simply invokes `pytest` for the
+  # repository. We set `pass_filenames: false` and `always_run: true`
+  # so it runs on `--all-files` (and avoids skipping when no files match).
+  - repo: local
+    hooks:
+      - id: pytest
+        name: Run pytest
+        entry: pytest -q
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [commit, push]
+repos:
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.14.2
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+
+  - repo: local
+    hooks:
+      - id: pytest
+        name: Run pytest
+        entry: python -m pytest -q
+        language: system
+        types: [python]

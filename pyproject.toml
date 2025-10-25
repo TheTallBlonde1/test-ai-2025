@@ -1,0 +1,30 @@
+[project]
+name = "test-ai-2025"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "openai>=1.106.1",
+    "python-dotenv",
+    "rich",
+    "tqdm",    
+]
+
+[project.optional-dependencies]
+# Development / CI dependencies (install with: pip install .[dev])
+dev = [
+    "pytest",
+    "pytest-cov",
+    "coverage",
+    "ruff",
+    "mypy",
+    "pre-commit",
+    "tox",
+    "pytest-mock",
+    "types-requests",
+]
+
+[tool.ruff]
+line-length = 88
+extend-ignore = ["E203", "W503"]

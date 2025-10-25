@@ -1,0 +1,46 @@
+# Ruff configuration file. Edit the settings below to enable/disable rules
+# or adjust behavior. See https://github.com/charliermarsh/ruff for full docs.
+
+# Maximum line length
+line-length = 400
+
+# Python target version(s). Examples: "py310", "py311", "py312"
+# Use a table if you want multiple targets: target-version = ["py310"]
+target-version = "py313"
+
+# Select specific rule codes to check (overrides default behaviour). Use
+# extend-select to add to the defaults instead of replacing them.
+# select = ["E", "F", "W", "C90"]
+
+# Ignore specific rule codes (global)
+# ignore = ["E501", "W291"]
+
+# Per-linter (lint) configuration
+[lint]
+# Extend the default ignore list instead of replacing it. NOTE: Some Ruff
+# versions (or rule sets) may not recognize certain legacy pycodestyle
+# selectors like W503. If you see an "Unknown rule" error, remove the
+# offending code or upgrade Ruff. For now we keep only E203 which is widely
+# supported.
+extend-ignore = ["E203"]
+
+# Per-file ignores: map file patterns to lists of rules to ignore
+per-file-ignores = { "tests/*" = ["D101", "D102"], "docs/conf.py" = ["E402"] }
+
+# Files / directories to exclude from scanning (glob or path)
+exclude = [".git", "__pycache__", ".venv", "build", "dist"]
+
+# If you prefer to extend the default excludes instead of replacing them
+# extend-exclude = ["generated/", "migrations/"]
+
+# Control import sorting style (isort-related behaviour). Options: "pyproject",
+# "google", "django" etc. Ruff supports basic import sorting controls.
+# import-order-style = "pyproject"
+
+# Path(s) containing your package source code. Ruff will restrict fixes/checks
+# to these directories when provided. If you leave this unset, Ruff will search
+# from the repository root.
+# src = ["src"]
+
+# You can add any additional ruff config keys here. The above list contains
+# common options; check Ruff docs for the full list and semantics.
