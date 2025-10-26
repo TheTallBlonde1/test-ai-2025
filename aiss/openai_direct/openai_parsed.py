@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from openai import OpenAI, Timeout
 from rich.console import Console
 
-from aiss.models import ModelType, ModelTypeResult
+from aiss.models import ModelTypeResult
 from aiss.models.protocols import ModelFormatProtocol
 
 from .wikipedia_tool import (
@@ -28,18 +28,6 @@ load_dotenv()
 # MARK: Parsed Response Helper
 # generic type variable for parsed response model bound to the ModelFormatProtocol
 T = TypeVar("T", bound=ModelFormatProtocol)
-
-
-def _model_type_for_format(format_cls: Type[ModelFormatProtocol] | None) -> ModelType:
-    if format_cls is None:
-        return ModelType.SHOW
-    for candidate in ModelType:
-        try:
-            if candidate.get_model_from_name() is format_cls:
-                return candidate
-        except ValueError:
-            continue
-    return ModelType.SHOW
 
 
 def get_parsed_response(model_type_result: ModelTypeResult, client: OpenAI, console: Console) -> None:

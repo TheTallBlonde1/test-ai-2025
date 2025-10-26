@@ -14,7 +14,7 @@ from openai import OpenAI, Timeout
 from rich.console import Console
 
 from aiss.models.protocols import ModelFormatProtocol
-from aiss.models.shared import ModelType, ModelTypeResult
+from aiss.models.shared import ModelTypeResult
 from aiss.utils import render_from_json
 
 from .wikipedia_tool import (
@@ -52,16 +52,6 @@ def _extract_text_from_response(response) -> str:
         return "\n".join(parts)
     except Exception:
         return ""
-
-
-def _model_type_for_format(format_cls: Type[ModelFormatProtocol]) -> ModelType:
-    for candidate in ModelType:
-        try:
-            if candidate.get_model_from_name() is format_cls:
-                return candidate
-        except ValueError:
-            continue
-    return ModelType.SHOW
 
 
 def get_json_response(
