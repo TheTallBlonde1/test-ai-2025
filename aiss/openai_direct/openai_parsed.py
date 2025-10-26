@@ -1,19 +1,23 @@
-from typing import TYPE_CHECKING, List, Optional, Type, TypeVar
+"""Helpers to query OpenAI's responses.parse endpoint and render parsed models.
+
+This module provides typed helpers that accept a "text format" class (for
+example a genre-specific `*ShowInfo` or one of the movie formats) and call the OpenAI SDK
+`responses.parse` endpoint, rendering the parsed Pydantic model to the console.
+"""
+
+from typing import TYPE_CHECKING, Optional, Type, TypeVar, cast
 
 from dotenv import load_dotenv
 from openai import OpenAI, Timeout
 from rich.console import Console
-from rich.progress import (
-    BarColumn,
-    Progress,
-    SpinnerColumn,
-    TextColumn,
-    TimeElapsedColumn,
-)
 
-from aiss.models.movie_model import MovieInfo
+from aiss.models import ModelType, ModelTypeResult
 from aiss.models.protocols import ModelFormatProtocol
-from aiss.models.show_model import ShowInfo
+
+from .wikipedia_tool import (
+    augment_instructions_with_tool_hint,
+    build_wikipedia_topic_context,
+)
 
 if TYPE_CHECKING:
     from openai.types.responses.parsed_response import ParsedResponse
@@ -21,24 +25,30 @@ if TYPE_CHECKING:
 
 load_dotenv()
 
-# generic type variable for parsed response model
+# MARK: Parsed Response Helper
 # generic type variable for parsed response model bound to the ModelFormatProtocol
 T = TypeVar("T", bound=ModelFormatProtocol)
 
 
-def get_parsed_response(
-    items: List[str],
-    client: OpenAI,
-    console: Console,
-    local_model: str = "show",
-    text_format: Type[T] | None = None,
-) -> None:
+def _model_type_for_format(format_cls: Type[ModelFormatProtocol] | None) -> ModelType:
+    if format_cls is None:
+        return ModelType.SHOW
+    for candidate in ModelType:
+        try:
+            if candidate.get_model_from_name() is format_cls:
+                return candidate
+        except ValueError:
+            continue
+    return ModelType.SHOW
+
+
+def get_parsed_response(model_type_result: ModelTypeResult, client: OpenAI, console: Console) -> None:
     """
 
-    Query the model and return a parsed ShowInfo representation.
+    Query the model and return a parsed representation of the requested format.
 
-    :param items: List of show names to query
-    :type items: list[str]
+    :param input_text: Name to query
+    :type input_text: str
     :param client: OpenAI client instance
     :type client: OpenAI
     :param console: Rich Console to render output to
@@ -47,68 +57,35 @@ def get_parsed_response(
     :type local_model: str
 
     """
-    # default to ShowInfo when no explicit text_format is provided
-    if text_format is None:
-        text_format = ShowInfo
 
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        TimeElapsedColumn(),
-        console=console,
-    ) as progress:
-        task = progress.add_task(f"Querying {local_model}", total=len(items))
+    # default to the shared show format when none is provided explicitly
+    text_format = cast(Type[T], model_type_result.model_type.get_model_from_name())
+    wikipedia_summary, context_hint = build_wikipedia_topic_context(
+        text_format,
+        model_type_result,
+    )
+    instructions = augment_instructions_with_tool_hint(
+        text_format.get_instructions(model_type_result.additional_info),
+        wikipedia_summary,
+        context_hint,
+    )
 
-        for item_name in items:
-            # Use the responses.parse endpoint to get structured ShowInfo back
-            response: ParsedResponse[T] = client.responses.parse(
-                model="gpt-5-mini",
-                instructions=text_format.get_instructions(),
-                input=text_format.get_user_prompt(item_name),
-                text_format=text_format,
-                timeout=Timeout(4000, connect=6.0),
-            )
-            item_info: Optional[T] = getattr(response, "output_parsed", None)
-            if item_info is None:
-                console.print(f"[red]Failed to parse info for '{item_name}'[/red]")
-                progress.update(task, advance=1)
-                continue
+    # Use the responses.parse endpoint to get structured format instances back
+    response: ParsedResponse[T] = client.responses.parse(
+        model="gpt-5-mini",
+        instructions=instructions,
+        input=text_format.get_user_prompt(model_type_result.formatted_name),
+        text_format=text_format,
+        timeout=Timeout(4000, connect=6.0),
+    )
+    item_info: Optional[T] = getattr(response, "output_parsed", None)
+    if item_info is None:
+        console.print(f"[red]Failed to parse info for '{model_type_result.formatted_name}'[/red]")
+        return
 
-            # render output (delegate to model's render method)
-            console.rule(f"[bold cyan]{item_name}")
-            item_info.render(console)
-            console.print("\n")
-            progress.update(task, advance=1)
+    setattr(item_info, "wikipedia_summary", wikipedia_summary)
 
-
-def movie_information_parsed(movies: List[str], client: OpenAI, console: Console):
-    """
-
-    Query the model and return a parsed MovieInfo representation.
-
-    :param movies: List of movie names to query
-    :type movies: list[str]
-    :param client: OpenAI client instance
-    :type client: OpenAI
-    :param console: Rich Console to render output to
-    :type console: Console
-
-    """
-    get_parsed_response(movies, client, console, local_model="movies", text_format=MovieInfo)
-
-
-def show_information_parsed(shows: List[str], client: OpenAI, console: Console):
-    """
-
-    Query the model and return a parsed ShowInfo representation.
-
-    :param shows: List of show names to query
-    :type shows: list[str]
-    :param client: OpenAI client instance
-    :type client: OpenAI
-    :param console: Rich Console to render output to
-    :type console: Console
-
-    """
-    get_parsed_response(shows, client, console, local_model="shows", text_format=ShowInfo)
+    # render output (delegate to model's render method)
+    console.rule(f"[bold cyan]{model_type_result.formatted_name}")
+    item_info.render(console)
+    console.print("\n")

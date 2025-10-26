@@ -1,9 +1,20 @@
+"""Additional tests for model rendering and JSON deserialization."""
+
 import json
 
 from aiss.utils import render_from_json
 
 
-def test_showinfo_render_output(sample_show, console):
+def test_drama_show_render_output(sample_show, console):
+    """
+    Test drama show rendering includes key content.
+
+    :param sample_show: Fixture providing a sample DramaShowInfo instance
+    :type sample_show: DramaShowInfo
+
+    :param console: Fixture providing a Rich Console for rendering
+    :type console: Console
+    """
     sample_show.render(console)
     out = console.export_text()
     assert "Summary here" in out
@@ -11,7 +22,16 @@ def test_showinfo_render_output(sample_show, console):
     assert "Studio" in out
 
 
-def test_movieinfo_render_output(sample_movie, console):
+def test_drama_movie_render_output(sample_movie, console):
+    """
+    Test drama movie rendering includes key content.
+
+    :param sample_movie: Fixture providing a sample DramaMovieInfo instance
+    :type sample_movie: DramaMovieInfo
+
+    :param console: Fixture providing a Rich Console for rendering
+    :type console: Console
+    """
     sample_movie.render(console)
     out = console.export_text()
     assert "Example" in out
@@ -20,6 +40,16 @@ def test_movieinfo_render_output(sample_movie, console):
 
 
 def test_render_from_json_basic(console):
+    """
+    Test rendering show data from JSON string.
+
+    Verifies that render_from_json can parse JSON and render it correctly,
+    including nested structures like characters, broadcast info, and
+    production companies.
+
+    :param console: Fixture providing a Rich Console for rendering
+    :type console: Console
+    """
     data = {
         "show_summary": "JSON summary",
         "characters": [{"character": "C1", "actor": "A1", "relationship": "Friend", "description": "Desc", "year_joined": 2010}],

@@ -8,7 +8,8 @@ dependencies = [
     "openai>=1.106.1",
     "python-dotenv",
     "rich",
-    "tqdm",    
+    "tqdm",
+    "wikipedia",   
 ]
 
 [project.optional-dependencies]

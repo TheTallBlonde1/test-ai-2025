@@ -1,42 +1,185 @@
-from typing import List, Union
+"""Utilities for rendering model data to the console.
+
+This module centralizes how Pydantic models or JSON-derived dicts are
+rendered to the terminal using Rich. It exposes two primary helpers:
+`render_table_from_schema` and `render_from_json`.
+
+"""
+
 import json
-from rich.table import Table
+from typing import List, Union
+
 from rich.console import Console
 from rich.panel import Panel
-from aiss.models.shared import TableSchema
+from rich.table import Table
+
+from .models.shared import TableSchema
+
+# MARK: Generic number helpers
 
 
-def render_table_from_schema(title: str, schema: List[Union[dict, TableSchema]], items: list, console: Console) -> None:
-    """Render a Rich Table from a schema and list of objects.
+def _coerce_numeric(value):
+    """Coerce a value into a float, handling common string inputs."""
 
-    schema: list of dicts with keys:
-        - header: column name shown in the table
-        - attr: attribute name to read from each item (getattr)
-        - style: (optional) rich style for the column
-        - justify: (optional) justification for the column
-        - no_wrap: (optional) no_wrap boolean
-        - formatter: (optional) callable or format-spec string to format the value
+    if value is None:
+        raise ValueError("Value is None")
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("Empty string")
+        cleaned = stripped.replace(",", "")
+        if cleaned.lower() == "present":
+            raise ValueError("present sentinel")
+        return float(cleaned)
+    raise TypeError(f"Unsupported type: {type(value)!r}")
 
-    Example:
-        schema = [
-            {"header": "Name", "attr": "character", "style": "magenta", "no_wrap": True},
-            {"header": "Actor", "attr": "actor", "style": "cyan"},
-        ]
+
+# MARK: Formatters
+def format_money(v, currency: str = "$") -> str:
+    """
+    Format a numeric value as a human-friendly money string with
+    thousands separators and an optional currency symbol.
+
+    :param v: Numeric value (int/float/str) or None
+    :param currency: Currency symbol to prefix (default: "$")
+    :return: Formatted money string or '-' for falsy/invalid values
+    """
+    try:
+        number = _coerce_numeric(v)
+    except Exception:
+        if v is None:
+            return "-"
+        if isinstance(v, str) and v.strip() == "":
+            return "-"
+        try:
+            return f"{currency}{str(v)}"
+        except Exception:
+            return str(v)
+
+    rounded = int(number)
+    return f"{currency}{rounded:,}"
+
+
+def format_year(v) -> str:
+    """
+    Format a year-like value into a human-friendly string.
+
+    Returns '-' for falsy values, otherwise returns the integer form as a string.
+    """
+    try:
+        if v is None:
+            return "-"
+        if isinstance(v, str):
+            stripped = v.strip()
+            if not stripped:
+                return "-"
+            if stripped.lower() == "present":
+                return "Present"
+            v = stripped
+
+        try:
+            year_value = int(float(v))
+        except Exception:
+            return str(v)
+
+        if year_value <= 0:
+            return "-"
+        if year_value >= 9999:
+            return "Present"
+        return str(year_value)
+    except Exception:
+        return str(v)
+
+
+def format_number(v) -> str:
+    """Format large integers with thousands separators."""
+
+    try:
+        number = _coerce_numeric(v)
+    except Exception:
+        return str(v)
+
+    rounded = round(number)
+    if abs(number - rounded) < 1e-6:
+        return f"{int(rounded):,}"
+    return f"{number:,.2f}".rstrip("0").rstrip(".")
+
+
+def format_decimal(v, digits: int = 1) -> str:
+    """Format a numeric value to a fixed number of decimal places."""
+
+    try:
+        number = _coerce_numeric(v)
+    except Exception:
+        return str(v)
+
+    formatted = f"{number:.{digits}f}"
+    if "." in formatted:
+        formatted = formatted.rstrip("0").rstrip(".")
+    return formatted
+
+
+def format_percentage(v) -> str:
+    """Format a ratio or percentage value gracefully."""
+
+    try:
+        number = _coerce_numeric(v)
+    except Exception:
+        return str(v)
+
+    if abs(number) <= 1:
+        number *= 100
+
+    formatted = f"{number:.1f}".rstrip("0").rstrip(".")
+    return f"{formatted}%"
+
+
+def format_runtime_minutes(v) -> str:
+    """Format a runtime in minutes with a suffix."""
+
+    try:
+        minutes = int(round(_coerce_numeric(v)))
+    except Exception:
+        return str(v)
+
+    if minutes <= 0:
+        return "-"
+    return f"{minutes:,} min"
+
+
+# MARK: Table Renderer
+def render_table_from_schema(title: str, schema: List[TableSchema], items: list, console: Console) -> None:
+    """
+    Render a Rich Table from a schema and list of objects.
+
+    :param title: Title used for the Rich Table
+    :type title: str
+
+    :param schema: Column schema as a list of dicts (legacy) or TableSchema
+        dataclass instances.
+    :type schema: List[Union[dict, TableSchema]]
+
+    :param items: Iterable of items to render. Each item may be a dict or an
+        object with attributes matching the schema.name values.
+    :type items: list
+
+    :param console: Rich Console to print the table to
+    :type console: Console
+
+    :return: None
+    :rtype: None
     """
     table = Table(title=title, show_lines=True)
     # add columns
     for col in schema:
         # allow either dict-based schema (legacy) or TableSchema dataclass
-        if isinstance(col, TableSchema):
-            header = col.header
-            style = col.style
-            justify = col.justify
-            no_wrap = col.no_wrap
-        else:
-            header = col.get("header")
-            style = col.get("style")
-            justify = col.get("justify")
-            no_wrap = col.get("no_wrap", False)
+
+        header = col.header
+        style = col.style
+        justify = col.justify
+        no_wrap = col.no_wrap
 
         if justify:
             table.add_column(header, style=style, justify=justify, no_wrap=no_wrap)
@@ -47,12 +190,8 @@ def render_table_from_schema(title: str, schema: List[Union[dict, TableSchema]],
     for it in items:
         row = []
         for col in schema:
-            if isinstance(col, TableSchema):
-                attr = col.name
-                formatter = col.formatter
-            else:
-                attr = col.get("attr")
-                formatter = col.get("formatter")
+            attr = col.name
+            formatter = col.formatter
 
             # support items that are either objects (getattr) or dicts
             if attr:
@@ -98,22 +237,26 @@ def render_table_from_schema(title: str, schema: List[Union[dict, TableSchema]],
 
 
 def render_from_json(data: Union[dict, str], console: Console) -> None:
-    """Render a JSON-shaped ShowInfo (dict or JSON string) to the provided Rich Console.
+    """
+    Render a JSON-shaped ShowInfo (dict or JSON string) to the provided
+    Rich Console.
 
-    Expected keys (best-effort):
-      - show_summary (str)
-      - characters (list[dict])
-      - broadcast_info (list[dict])
-      - production_companies (list[dict])
+    This helper is forgiving: it accepts either a parsed dict or a raw JSON
+    string, pretty-prints the raw JSON and then renders summary panels and
+    tables for characters, broadcast info and production companies.
 
-    This function tolerates missing keys and formats years like the models do.
+    :param data: JSON-shaped data as a dict or a JSON string
+    :type data: Union[dict, str]
+
+    :param console: Rich Console instance used for output
+    :type console: Console
+
+    :return: None
+    :rtype: None
     """
 
-    def _format_year(v) -> str:
-        try:
-            return str(int(v)) if v else "-"
-        except Exception:
-            return str(v)
+    # Use the shared year formatter
+    _format_year = format_year
 
     # If a raw JSON string was passed, parse it first.
     parsed = data

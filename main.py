@@ -1,66 +1,39 @@
+"""Command-line entrypoint and convenience runner for demo queries.
+
+This module provides a tiny CLI used during development to exercise the
+OpenAI helpers. It is intentionally minimal and demonstrates how to call
+the parsed/json/text helper flows.
+"""
+
 import argparse
 
-from dotenv import load_dotenv
-from openai import OpenAI
-from rich.console import Console
+from aiss import ResultType, run_the_query
 
-from aiss import show_information_json, show_information_parsed, show_information_text
-
-load_dotenv()
+__all__ = ["main"]
 
 
-def run_show_queries(show: str | None, client: OpenAI, console: Console, mode: str = "parsed"):
-    if not mode:
-        mode = "parsed"
-    if mode not in ("parsed", "json", "text"):
-        console.print(f"[bold red]Error:[/bold red] Unknown mode '{mode}'. Choose from 'parsed', 'json', or 'text'.")
-        return
+# MARK: Main
+def main(input_text: str | None = None, mode: ResultType | str | None = ResultType.PARSED) -> None:
+    """
+    Small main function used by the CLI to initialize the client and console.
 
-    if mode == "parsed":
-        console.print("[bold green]Running Parsed Show Information Queries[/bold green]")
+    :param input_text: Input text to run (default: None)
+    :type input_text: str
 
-        test_shows = [
-            "Peppa Pig",
-            "SpongeBob SquarePants",
-            "Avatar: The Last Airbender",
-        ]
-        shows = [show] if show else test_shows
-        show_information_parsed(shows, client, console)
+    :param mode: Mode to run ('parsed' | 'json' | 'text')
+    :type mode: ResultType | str | None
 
-    elif mode == "json":
-        console.print("[bold green]Running JSON Show Information Queries[/bold green]")
-        test_shows = [
-            "The Office",
-            "Friends",
-            "Breaking Bad",
-        ]
-        shows = [show] if show else test_shows
-        show_information_json(shows, client, console)
+    :return: None
+    :rtype: None
+    """
 
-    elif mode == "text":
-        console.print("[bold green]Running Text Show Information Queries[/bold green]")
-        test_shows = [
-            "Game of Thrones",
-            "Stranger Things",
-            "The Crown",
-        ]
-        shows = [show] if show else test_shows
-        show_information_text(shows, client, console)
-
-
-def main(show: str | None = None, mode: str = "parsed"):
-    client: OpenAI = OpenAI()
-    console = Console()
-    run_show_queries(show, client, console, mode)
+    run_the_query(input_text, mode)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Query show info via OpenAI responses.parse and print pretty output")
-    parser.add_argument(
-        "--show",
-        "-s",
-        help="Single show name to query (if omitted, runs the test list)",
-    )
+
+    parser.add_argument("input_text", nargs="?", help="First (default) input to query (positional)", default="Match of the Day shown on Saturdays on BBC One in the UK")
     parser.add_argument(
         "--mode",
         "-m",
@@ -69,7 +42,4 @@ if __name__ == "__main__":
         help="Mode of querying show information",
     )
     args = parser.parse_args()
-
-    show = args.show if args.show else None
-
-    main(show, args.mode)
+    main(args.input_text, ResultType(args.mode))

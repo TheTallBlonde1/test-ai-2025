@@ -1,25 +1,46 @@
+"""Shared pytest fixtures for all test modules."""
+
 from unittest.mock import Mock
 
 import pytest
 from rich.console import Console
 
-from aiss.models.movie_model import BoxOfficeInfo, CastMemberInfo, MovieInfo
-from aiss.models.movie_model import ProductionCompanyInfo as MovieProd
-from aiss.models.show_model import BroadcastInfo, CharInfoInfo, ProductionCompanyInfo, ShowInfo
+from aiss.models.movies import (
+    BoxOfficeInfo,
+    CastMemberInfo,
+    DramaMovieInfo,
+)
+from aiss.models.movies import (
+    ProductionCompanyInfo as MovieProductionCompanyInfo,
+)
+from aiss.models.shows._base import BroadcastInfo, ProductionCompanyInfo
+from aiss.models.shows.drama_model import DramaCharacterProfile, DramaShowInfo
 
 
 @pytest.fixture
 def console() -> Console:
-    """Rich Console configured for tests (record=True)."""
+    """
+    Rich Console configured for tests with recording enabled.
+
+    :return: A Console instance with record=True for capturing output
+    :rtype: Console
+    """
     return Console(record=True)
 
 
 @pytest.fixture
 def fake_client_factory():
-    """Return a factory that produces a fake OpenAI-like client whose
-    responses.parse returns an object with .output_parsed set to the
-    provided parsed value.
-    Usage: client = fake_client_factory(parsed_obj)
+    """
+    Return a factory that produces a fake OpenAI-like client.
+
+    The client's responses.parse returns an object with .output_parsed
+    set to the provided parsed value.
+
+    Usage:
+        client = fake_client_factory(parsed_obj)
+
+    :return: Factory function that creates mock clients
+    :rtype: Callable
     """
 
     def _make(parsed):
@@ -32,26 +53,53 @@ def fake_client_factory():
 
 
 @pytest.fixture
-def sample_show() -> ShowInfo:
-    fake_char = CharInfoInfo(
-        character="Test Character",
+def sample_show() -> DramaShowInfo:
+    """
+    Create a sample DramaShowInfo instance for testing.
+
+    :return: A populated DramaShowInfo instance with character, production, and broadcast data
+    :rtype: DramaShowInfo
+    """
+    fake_char = DramaCharacterProfile(
+        name="Test Character",
         actor="Actor Name",
-        relationship="Friend",
-        description="A brave test character",
-        year_joined=2001,
+        arc_summary="Arc summary",
+        driving_conflict="Conflict",
+        key_relationships=["Friend"],
+        season_introduced=1,
+        current_status="Active",
     )
     prod = ProductionCompanyInfo(name="Studio", founded_year=1990, start_year=2000, end_year=2005, country="USA")
     brod = BroadcastInfo(network="Net", country="US", start_year=2000, end_year=2004)
-    s = ShowInfo(characters=[fake_char], show_summary="Summary here", production_companies=[prod], broadcast_info=[brod])
+    s = DramaShowInfo(
+        title="Sample Show",
+        logline="Sample logline",
+        characters=[fake_char],
+        show_summary="Summary here",
+        production_companies=[prod],
+        broadcast_info=[brod],
+    )
     return s
 
 
 @pytest.fixture
-def sample_movie() -> MovieInfo:
+def sample_movie() -> DramaMovieInfo:
+    """
+    Create a sample DramaMovieInfo instance for testing.
+
+    :return: A populated DramaMovieInfo instance with cast, production, and box office data
+    :rtype: DramaMovieInfo
+    """
     cast = CastMemberInfo(character="Lead", actor="Actor", role="lead")
-    prod = MovieProd(name="BigStudio", founded_year=1980, start_year=2019, end_year=2020, country="USA")
+    prod = MovieProductionCompanyInfo(
+        name="BigStudio",
+        founded_year=1980,
+        start_year=2019,
+        end_year=2020,
+        country="USA",
+    )
     bo = BoxOfficeInfo(budget=1000000, gross_worldwide=5000000, gross_domestic=2000000)
-    m = MovieInfo(
+    m = DramaMovieInfo(
         title="Example",
         synopsis="An example movie",
         release_year=2020,
@@ -61,5 +109,8 @@ def sample_movie() -> MovieInfo:
         cast=[cast],
         production_companies=[prod],
         box_office=bo,
+        central_conflict="Lead must choose between ambition and loyalty.",
+        themes=["Ambition", "Friendship"],
+        pivotal_moments=["Lead confronts mentor"],
     )
     return m
