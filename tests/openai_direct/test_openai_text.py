@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 
 from rich.console import Console
 
-from aiss.models.shared import ModelType, ModelTypeResult
+from aiss.models.shared import ModelType, ModelTypeInput
 from aiss.openai_direct.openai_text import get_text_response
 
 
@@ -26,7 +26,7 @@ class TestGetTextResponse:
         mock_response.output_text = "This is the plain text output from the model."
         mock_client.responses.create.return_value = mock_response
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type=ModelType.MOVIE,
             description="Test movie description",
             formatted_name="Test Movie",
@@ -55,7 +55,7 @@ class TestGetTextResponse:
         mock_response.output_text = "Custom format output"
         mock_client.responses.create.return_value = mock_response
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type=ModelType.ROLE_PLAYING_GAME,
             description="Test game description",
             formatted_name="Test Game",
@@ -80,7 +80,7 @@ class TestGetTextResponse:
         mock_response.output_text = "Output with additional context"
         mock_client.responses.create.return_value = mock_response
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type=ModelType.DRAMA_MOVIE,
             description="Complex movie with additional information",
             formatted_name="Complex Movie",
@@ -105,7 +105,7 @@ class TestGetTextResponse:
         mock_response.output_text = ""
         mock_client.responses.create.return_value = mock_response
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type=ModelType.SHOW,
             description="Test show description",
             formatted_name="Test",
@@ -129,7 +129,7 @@ class TestGetTextResponse:
         mock_response.output_text = "Line 1\nLine 2\nLine 3\nLine 4"
         mock_client.responses.create.return_value = mock_response
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type=ModelType.COMEDY,
             description="Test comedy show",
             formatted_name="Test Show",
@@ -153,7 +153,7 @@ class TestGetTextResponse:
         mock_response.output_text = "Text with None format"
         mock_client.responses.create.return_value = mock_response
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type=ModelType.MOVIE,
             description="Test movie description",
             formatted_name="Test",
@@ -179,7 +179,7 @@ class TestGetTextResponse:
         mock_response.output_text = long_text
         mock_client.responses.create.return_value = mock_response
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type=ModelType.THRILLER,
             description="Test thriller description",
             formatted_name="Test",

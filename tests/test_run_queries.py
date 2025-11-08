@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from aiss.models.shared import ModelTypeResult, ResultType
+from aiss.models.shared import ModelTypeInput, ResultType
 from aiss.run_queries import run_the_query
 
 
@@ -19,7 +19,7 @@ class TestRunTheQuery:
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type="movie",
             description="A test movie",
             formatted_name="Test Movie",
@@ -43,7 +43,7 @@ class TestRunTheQuery:
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type="game",
             description="A test game",
             formatted_name="Test Game",
@@ -63,7 +63,7 @@ class TestRunTheQuery:
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type="show",
             description="A test show",
             formatted_name="Test Show",
@@ -83,7 +83,7 @@ class TestRunTheQuery:
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type="movie",
             description="Test content",
             formatted_name="Test",
@@ -102,7 +102,7 @@ class TestRunTheQuery:
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type="game",
             description="Test content",
             formatted_name="Test",
@@ -121,7 +121,7 @@ class TestRunTheQuery:
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type="show",
             description="Test content",
             formatted_name="Test",
@@ -140,7 +140,7 @@ class TestRunTheQuery:
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type="movie",
             description="Test content",
             formatted_name="Test",
@@ -208,7 +208,7 @@ class TestRunTheQuery:
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type="movie",
             description="Test content",
             formatted_name="Test",
@@ -229,7 +229,7 @@ class TestRunTheQuery:
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type="movie",
             description="Test content",
             formatted_name="Test",
@@ -248,7 +248,7 @@ class TestRunTheQuery:
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type="show",
             description="Test content",
             formatted_name="Test",
@@ -259,16 +259,23 @@ class TestRunTheQuery:
 
         mock_get_text.assert_called_once()
 
+    @patch("aiss.openai_direct.openai_parsed.Progress")
+    @patch("aiss.openai_direct.openai_parsed.build_wikipedia_topic_context", return_value=("Summary", "Context"))
+    @patch("aiss.openai_direct.openai_parsed.augment_instructions_with_tool_hint", return_value="Instructions")
     @patch("aiss.run_queries.OpenAI")
     @patch("aiss.run_queries.find_model_from_input")
-    @patch("aiss.run_queries.get_parsed_response")
-    @patch("aiss.run_queries.Progress")
-    def test_run_query_progress_ui_created(self, mock_progress_class, mock_get_parsed, mock_find_model, mock_openai_class):
-        """Test that Progress UI is created and used."""
+    def test_run_query_progress_ui_created(self, mock_find_model, mock_openai_class, _mock_aug, _mock_wiki, mock_progress_class):
+        """Test that Progress UI is created and used within the parsed sub-function."""
+        # Prepare OpenAI client mock with responses.parse returning output_parsed
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
+        mock_response = Mock()
+        parsed_obj = Mock()
+        parsed_obj.render = Mock()
+        mock_response.output_parsed = parsed_obj
+        mock_client.responses.parse.return_value = mock_response
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type="movie",
             description="Test movie content",
             formatted_name="Test Movie",
@@ -280,10 +287,9 @@ class TestRunTheQuery:
 
         run_the_query("Test Movie", ResultType.PARSED)
 
-        # Verify progress was used
+        # Verify progress used inside openai_parsed.get_parsed_response
         assert mock_progress.add_task.called
         assert mock_progress.update.called
-        assert mock_progress.stop.called
 
     @patch("aiss.run_queries.OpenAI")
     @patch("aiss.run_queries.find_model_from_input")
@@ -293,7 +299,7 @@ class TestRunTheQuery:
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type="movie",
             description="Complex movie with additional information",
             formatted_name="Complex Movie",

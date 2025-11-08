@@ -13,7 +13,11 @@ __all__ = ["main"]
 
 
 # MARK: Main
-def main(input_text: str | None = None, mode: ResultType | str | None = ResultType.PARSED) -> None:
+def main(
+    input_text: str | None = None,
+    mode: ResultType | str | None = ResultType.PARSED,
+    api: str | None = "openai",
+) -> None:
     """
     Small main function used by the CLI to initialize the client and console.
 
@@ -27,11 +31,23 @@ def main(input_text: str | None = None, mode: ResultType | str | None = ResultTy
     :rtype: None
     """
 
-    run_the_query(input_text, mode)
+    run_the_query(input_text, mode, api)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Query show info via OpenAI responses.parse and print pretty output")
+    """
+    
+    Small CLI entrypoint to run queries from the command line.
+
+    To run, use:
+    ```pwsh
+    python main.py "Your query here" --mode parsed --api openai
+    ```
+
+    :return: None
+
+    """
+    parser = argparse.ArgumentParser(description="Query show info via OpenAI or Pydantic AI and print pretty output")
 
     parser.add_argument("input_text", nargs="?", help="First (default) input to query (positional)", default="Match of the Day shown on Saturdays on BBC One in the UK")
     parser.add_argument(
@@ -41,5 +57,12 @@ if __name__ == "__main__":
         default="parsed",
         help="Mode of querying show information",
     )
+    parser.add_argument(
+        "--api",
+        "-a",
+        choices=["openai", "pydantic"],
+        default="pydantic",
+        help="Backend API to use (default: pydantic)",
+    )
     args = parser.parse_args()
-    main(args.input_text, ResultType(args.mode))
+    main(args.input_text, ResultType(args.mode), args.api)

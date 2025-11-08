@@ -12,9 +12,10 @@ from typing import TYPE_CHECKING, Type, TypeVar, cast
 from dotenv import load_dotenv
 from openai import OpenAI, Timeout
 from rich.console import Console
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
 from aiss.models.protocols import ModelFormatProtocol
-from aiss.models.shared import ModelTypeResult
+from aiss.models.shared import ModelTypeInput
 from aiss.utils import render_from_json
 
 from .wikipedia_tool import (
@@ -55,49 +56,63 @@ def _extract_text_from_response(response) -> str:
 
 
 def get_json_response(
-    model_type_result: ModelTypeResult,
+    model_type_result: ModelTypeInput,
     client: OpenAI,
     console: Console,
 ):
     """Render JSON output for a detected model type."""
 
-    text_format = cast(Type[T], model_type_result.model_type.get_model_from_name())
-    wikipedia_summary, context_hint = build_wikipedia_topic_context(text_format, model_type_result)
-    instructions = augment_instructions_with_tool_hint(
-        text_format.get_instructions(model_type_result.additional_info),
-        wikipedia_summary,
-        context_hint,
-    )
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TimeElapsedColumn(),
+        console=console,
+    ) as progress:
+        task = progress.add_task("Building Wikipedia context", total=5)
 
-    response: Response = client.responses.create(
-        model="gpt-5-mini",
-        instructions=instructions,
-        input=text_format.get_user_prompt(model_type_result.formatted_name),
-        timeout=Timeout(4000, connect=6.0),
-    )
+        text_format = cast(Type[T], model_type_result.model_type.get_model_from_name())
+        wikipedia_summary, context_hint = build_wikipedia_topic_context(text_format, model_type_result)
+        progress.update(task, description="Composing instructions", advance=1)
 
-    raw = _extract_text_from_response(response)
+        instructions = augment_instructions_with_tool_hint(
+            text_format.get_instructions(model_type_result.additional_info),
+            wikipedia_summary,
+            context_hint,
+        )
 
-    data = None
-    if raw:
+        progress.update(task, description="Requesting JSON response", advance=1)
+        response: Response = client.responses.create(
+            model="gpt-5-mini",
+            instructions=instructions,
+            input=text_format.get_user_prompt(model_type_result.formatted_name),
+            timeout=Timeout(4000, connect=6.0),
+        )
+
+        progress.update(task, description="Parsing JSON output", advance=1)
+        raw = _extract_text_from_response(response)
+
+        data = None
+        if raw:
+            try:
+                data = json.loads(raw)
+            except Exception:
+                m = re.search(r"(\{(?:.|\n)*\}|\[(?:.|\n)*\])", raw)
+                if m:
+                    try:
+                        data = json.loads(m.group(1))
+                    except Exception:
+                        data = None
+
+        if data is None:
+            console.print(f"[red]Failed to parse JSON output for '{model_type_result.formatted_name}'[/red]")
+            return
+
+        progress.update(task, description="Rendering JSON", advance=1)
+        console.rule(f"[bold cyan]{model_type_result.formatted_name}")
         try:
-            data = json.loads(raw)
-        except Exception:
-            m = re.search(r"(\{(?:.|\n)*\}|\[(?:.|\n)*\])", raw)
-            if m:
-                try:
-                    data = json.loads(m.group(1))
-                except Exception:
-                    data = None
+            render_from_json(data, console)
+        except Exception as exc:
+            console.print(f"[red]Rendering JSON failed: {exc}[/red]")
 
-    if data is None:
-        console.print(f"[red]Failed to parse JSON output for '{model_type_result.formatted_name}'[/red]")
-        return
-
-    console.rule(f"[bold cyan]{model_type_result.formatted_name}")
-    try:
-        render_from_json(data, console)
-    except Exception as exc:
-        console.print(f"[red]Rendering JSON failed: {exc}[/red]")
-
-    console.print("\n")
+        console.print("\n")

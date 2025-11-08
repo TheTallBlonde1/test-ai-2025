@@ -5,7 +5,7 @@ from .games import *  # noqa: F401,F403
 from .games import __all__ as _games_all
 from .movies import *  # noqa: F401,F403
 from .movies import __all__ as _movies_all
-from .shared import ModelType, ModelTypeResult, ResultType, TableSchema
+from .shared import ModelType, ModelTypeInput, ResultType, TableSchema
 from .shows import *  # noqa: F401,F403
 from .shows import __all__ as _shows_all
 
@@ -16,7 +16,7 @@ __all__ = (
     + [
         "ResultType",
         "ModelType",
-        "ModelTypeResult",
+        "ModelTypeInput",
         "FindModelRequest",
         "TableSchema",
     ]

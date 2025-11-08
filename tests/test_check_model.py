@@ -6,7 +6,7 @@ import pytest
 from openai import OpenAI, Timeout
 
 from aiss.check_model import find_model_from_input
-from aiss.models import FindModelRequest, ModelType, ModelTypeResult
+from aiss.models import FindModelRequest, ModelType, ModelTypeInput
 
 
 def test_module_import():
@@ -47,7 +47,7 @@ class TestFindModelFromInput:
 
         result = find_model_from_input("Die Hard action movie", mock_client, console)
 
-        assert isinstance(result, ModelTypeResult)
+        assert isinstance(result, ModelTypeInput)
         assert result.model_type == ModelType.ACTION_ADVENTURE_MOVIE
         assert result.formatted_name == "Die Hard"
         assert "Action packed" in result.additional_info

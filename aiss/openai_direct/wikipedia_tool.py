@@ -14,12 +14,12 @@ from typing import List, Type
 from wikipedia import summary
 
 from aiss.models.protocols import ModelFormatProtocol
-from aiss.models.shared import ModelTypeResult
+from aiss.models.shared import ModelTypeInput
 
 
 def build_wikipedia_topic_context(
     text_format: Type[ModelFormatProtocol],
-    model_type_result: ModelTypeResult,
+    model_type_result: ModelTypeInput,
 ) -> tuple[str, str]:
     """Create a context string describing the work for informative tool usage."""
 

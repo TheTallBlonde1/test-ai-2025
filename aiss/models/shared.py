@@ -201,7 +201,7 @@ class ModelType(StrEnum):
 
 
 @dataclass
-class ModelTypeResult:
+class ModelTypeInput:
     model_type: ModelType
     description: str
     formatted_name: str

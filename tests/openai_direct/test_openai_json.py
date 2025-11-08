@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 
 from rich.console import Console
 
-from aiss.models.shared import ModelType, ModelTypeResult
+from aiss.models.shared import ModelType, ModelTypeInput
 from aiss.openai_direct.openai_json import (
     _extract_text_from_response,
     _model_type_for_format,
@@ -184,7 +184,7 @@ class TestGetJsonResponse:
         mock_response.output_text = '{"title": "Test Movie", "year": 2020}'
         mock_client.responses.create.return_value = mock_response
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type=ModelType.MOVIE,
             description="Test movie description",
             formatted_name="Test Movie",
@@ -212,7 +212,7 @@ class TestGetJsonResponse:
         mock_response.output_text = "Not valid JSON at all"
         mock_client.responses.create.return_value = mock_response
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type=ModelType.ACTION_ADVENTURE_GAME,
             description="Test game description",
             formatted_name="Test",
@@ -237,7 +237,7 @@ class TestGetJsonResponse:
         mock_response.output_text = 'Some text before {"title": "Extracted"} some text after'
         mock_client.responses.create.return_value = mock_response
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type=ModelType.SHOW,
             description="Test show description",
             formatted_name="Test",
@@ -262,7 +262,7 @@ class TestGetJsonResponse:
         mock_response.output_text = ""
         mock_client.responses.create.return_value = mock_response
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type=ModelType.MOVIE,
             description="Test movie description",
             formatted_name="Test",
@@ -289,7 +289,7 @@ class TestGetJsonResponse:
 
         mock_render.side_effect = Exception("Rendering error")
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type=ModelType.SHOOTER_GAME,
             description="Test shooter game",
             formatted_name="Test",
@@ -314,7 +314,7 @@ class TestGetJsonResponse:
         mock_response.output_text = '{"title": "Movie"}'
         mock_client.responses.create.return_value = mock_response
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type=ModelType.MOVIE,
             description="Complex movie with additional information",
             formatted_name="Complex Movie",
@@ -340,7 +340,7 @@ class TestGetJsonResponse:
         mock_response.output_text = '[{"item": 1}, {"item": 2}]'
         mock_client.responses.create.return_value = mock_response
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type=ModelType.SHOW,
             description="Test show description",
             formatted_name="Test",
@@ -364,7 +364,7 @@ class TestGetJsonResponse:
         mock_response.output_text = "Text with {invalid json} in it"
         mock_client.responses.create.return_value = mock_response
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type=ModelType.MOVIE,
             description="Test movie description",
             formatted_name="Test",

@@ -2,7 +2,7 @@
 
 from unittest.mock import patch
 
-from aiss.models.shared import ModelTypeResult
+from aiss.models.shared import ModelTypeInput
 from aiss.openai_direct.wikipedia_tool import (
     augment_instructions_with_tool_hint,
     augment_prompt_with_wikipedia_context,
@@ -26,7 +26,7 @@ class TestBuildWikipediaTopicContext:
         """Test building context with all model attributes present."""
         mock_summary.return_value = "Mock Wikipedia summary about the topic."
 
-        model_type_result = ModelTypeResult(
+        model_type_result = ModelTypeInput(
             model_type="movie",
             description="Test movie description",
             formatted_name="Test Movie",
@@ -52,7 +52,7 @@ class TestBuildWikipediaTopicContext:
         class MinimalModelFormat:
             model_name = "Minimal"
 
-        model_type_result = ModelTypeResult(
+        model_type_result = ModelTypeInput(
             model_type="test",
             description="Test title description",
             formatted_name="Test Title",
@@ -76,7 +76,7 @@ class TestBuildWikipediaTopicContext:
             model_name = "NoDesc"
             key_trait = "trait"
 
-        model_type_result = ModelTypeResult(
+        model_type_result = ModelTypeInput(
             model_type="test",
             description="Another title description",
             formatted_name="Another Title",
@@ -94,7 +94,7 @@ class TestBuildWikipediaTopicContext:
         """Test building context with additional info."""
         mock_summary.return_value = "Summary with additional info"
 
-        model_type_result = ModelTypeResult(
+        model_type_result = ModelTypeInput(
             model_type="complex",
             description="Complex title with additional information",
             formatted_name="Complex Title",
@@ -111,7 +111,7 @@ class TestBuildWikipediaTopicContext:
 
     def test_build_context_empty_formatted_name(self):
         """Test building context with empty formatted name returns empty string."""
-        model_type_result = ModelTypeResult(
+        model_type_result = ModelTypeInput(
             model_type="test",
             description="Empty test",
             formatted_name="",
@@ -123,7 +123,7 @@ class TestBuildWikipediaTopicContext:
 
     def test_build_context_whitespace_formatted_name(self):
         """Test building context with whitespace-only formatted name."""
-        model_type_result = ModelTypeResult(
+        model_type_result = ModelTypeInput(
             model_type="test",
             description="Whitespace test",
             formatted_name="   ",
@@ -138,7 +138,7 @@ class TestBuildWikipediaTopicContext:
         """Test handling Wikipedia API exception."""
         mock_summary.side_effect = Exception("Wikipedia API Error")
 
-        model_type_result = ModelTypeResult(
+        model_type_result = ModelTypeInput(
             model_type="test",
             description="Nonexistent article test",
             formatted_name="Nonexistent Article",
@@ -159,7 +159,7 @@ class TestBuildWikipediaTopicContext:
         """Test building context when additional_info is None."""
         mock_summary.return_value = "Summary text"
 
-        model_type_result = ModelTypeResult(
+        model_type_result = ModelTypeInput(
             model_type="test",
             description="Test description",
             formatted_name="Test",
@@ -180,7 +180,7 @@ class TestBuildWikipediaTopicContext:
         class NoModelName:
             pass
 
-        model_type_result = ModelTypeResult(
+        model_type_result = ModelTypeInput(
             model_type="test",
             description="Title description",
             formatted_name="Title",
@@ -357,7 +357,7 @@ class TestIntegration:
         """Test complete workflow from building context to augmenting prompt."""
         mock_summary.return_value = "Complete Wikipedia article about the topic."
 
-        model_type_result = ModelTypeResult(
+        model_type_result = ModelTypeInput(
             model_type="movie",
             description="Sci-Fi action movie from 1999",
             formatted_name="The Matrix",
@@ -392,7 +392,7 @@ class TestIntegration:
         class MinimalModel:
             pass
 
-        model_type_result = ModelTypeResult(
+        model_type_result = ModelTypeInput(
             model_type="test",
             description="Simple work description",
             formatted_name="Simple Work",

@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 
 from rich.console import Console
 
-from aiss.models.shared import ModelType, ModelTypeResult
+from aiss.models.shared import ModelType, ModelTypeInput
 from aiss.openai_direct.openai_parsed import (
     _model_type_for_format,
     get_parsed_response,
@@ -73,7 +73,7 @@ class TestGetParsedResponse:
         mock_response.output_parsed = mock_parsed_result
         mock_client.responses.parse.return_value = mock_response
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type=ModelType.MOVIE,
             description="Test movie description",
             formatted_name="Test Movie",
@@ -101,7 +101,7 @@ class TestGetParsedResponse:
         mock_response.output_parsed = None
         mock_client.responses.parse.return_value = mock_response
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type=ModelType.SHOW,
             description="Test show description",
             formatted_name="Test",
@@ -131,7 +131,7 @@ class TestGetParsedResponse:
         mock_response.output_parsed = mock_parsed_result
         mock_client.responses.parse.return_value = mock_response
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type=ModelType.DRAMA,
             description="Test drama show",
             formatted_name="Test Show",
@@ -161,7 +161,7 @@ class TestGetParsedResponse:
         mock_response.output_parsed = mock_parsed_result
         mock_client.responses.parse.return_value = mock_response
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type=ModelType.SHOOTER_GAME,
             description="Test shooter game with additional info",
             formatted_name="Test Game",
@@ -185,7 +185,7 @@ class TestGetParsedResponse:
         mock_response = Mock(spec=[])  # No attributes
         mock_client.responses.parse.return_value = mock_response
 
-        model_result = ModelTypeResult(
+        model_result = ModelTypeInput(
             model_type=ModelType.MOVIE,
             description="Test movie description",
             formatted_name="Test",

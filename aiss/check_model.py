@@ -13,7 +13,7 @@ from openai import OpenAI, Timeout
 from rich.console import Console
 
 # Progress UI is managed by the caller (run_queries); no progress imports here.
-from aiss.models import FindModelRequest, ModelType, ModelTypeResult
+from aiss.models import FindModelRequest, ModelType, ModelTypeInput
 
 if TYPE_CHECKING:
     from openai.types.responses.parsed_response import ParsedResponse
@@ -26,7 +26,7 @@ def find_model_from_input(
     input_text: str,
     client: OpenAI,
     console: Console,
-) -> ModelTypeResult:
+) -> ModelTypeInput:
     """
 
     Query the model and return a JSON representation of the show info.
@@ -64,7 +64,7 @@ def find_model_from_input(
     console.rule(f"[bold cyan]Model Type: {find_model_response.find_model}")
     console.print("\n")
 
-    return ModelTypeResult(
+    return ModelTypeInput(
         model_type=ModelType(find_model_response.find_model),
         description=find_model_response.description,
         formatted_name=find_model_response.formatted_name,

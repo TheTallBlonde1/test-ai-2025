@@ -6,7 +6,7 @@ import pytest
 
 from aiss.models.shared import (
     ModelType,
-    ModelTypeResult,
+    ModelTypeInput,
     TableSchema,
     compose_instructions,
 )
@@ -218,7 +218,7 @@ class TestModelTypeResult:
 
     def test_str_representation(self):
         """Test __str__ formats properly."""
-        result = ModelTypeResult(model_type=ModelType.DRAMA, description="A dramatic TV series", formatted_name="Breaking Bad", additional_info=None)
+        result = ModelTypeInput(model_type=ModelType.DRAMA, description="A dramatic TV series", formatted_name="Breaking Bad", additional_info=None)
 
         str_repr = str(result)
         assert "Breaking Bad" in str_repr
@@ -226,7 +226,7 @@ class TestModelTypeResult:
 
     def test_repr_representation(self):
         """Test __repr__ formats properly."""
-        result = ModelTypeResult(model_type=ModelType.COMEDY, description="A comedic TV series", formatted_name="Friends", additional_info=["Context 1"])
+        result = ModelTypeInput(model_type=ModelType.COMEDY, description="A comedic TV series", formatted_name="Friends", additional_info=["Context 1"])
 
         repr_str = repr(result)
         assert "ModelTypeResult" in repr_str
@@ -236,7 +236,7 @@ class TestModelTypeResult:
 
     def test_with_additional_info(self):
         """Test ModelTypeResult with additional_info."""
-        result = ModelTypeResult(model_type=ModelType.ACTION_ADVENTURE_MOVIE, description="An action-packed adventure movie", formatted_name="Die Hard", additional_info=["Focus on action", "Include cast"])
+        result = ModelTypeInput(model_type=ModelType.ACTION_ADVENTURE_MOVIE, description="An action-packed adventure movie", formatted_name="Die Hard", additional_info=["Focus on action", "Include cast"])
 
         assert result.additional_info == ["Focus on action", "Include cast"]
         assert result.formatted_name == "Die Hard"
