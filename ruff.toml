@@ -2,7 +2,7 @@
 # or adjust behavior. See https://github.com/charliermarsh/ruff for full docs.
 
 # Maximum line length
-line-length = 400
+line-length = 320
 
 # Python target version(s). Examples: "py310", "py311", "py312"
 # Use a table if you want multiple targets: target-version = ["py310"]

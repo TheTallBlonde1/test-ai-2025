@@ -9,7 +9,8 @@ dependencies = [
     "python-dotenv",
     "rich",
     "tqdm",
-    "wikipedia",   
+    "wikipedia",
+    "pydantic-ai"  
 ]
 
 [project.optional-dependencies]
@@ -23,7 +24,7 @@ dev = [
     "pre-commit",
     "tox",
     "pytest-mock",
-    "types-requests",
+    "types-requests"
 ]
 
 [tool.ruff]

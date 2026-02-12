@@ -13,8 +13,8 @@ Modern Python toolkit that classifies entertainment topics (shows, movies, games
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
-	- [CLI](#cli)
-	- [Python API](#python-api)
+ 	- [CLI](#cli)
+ 	- [Python API](#python-api)
 - [Project structure](#project-structure)
 - [Testing](#testing)
 - [Linting and formatting](#linting-and-formatting)
@@ -43,10 +43,10 @@ The project is thoroughly tested and built for extension—add new formats by dr
 ## Architecture
 
 - Core entry points live under `aiss/`:
-	- `run_the_query`: Orchestrates detection + chosen response flow
-	- `check_model.find_model_from_input`: Asks OpenAI to select the model type
-	- `openai_direct/*`: Implements the three response modes and Wikipedia tool
-	- `models/*`: Typed model descriptors for shows, movies, and games
+ 	- `run_the_query`: Orchestrates detection + chosen response flow
+ 	- `check_model.find_model_from_input`: Asks OpenAI to select the model type
+ 	- `openai_direct/*`: Implements the three response modes and Wikipedia tool
+ 	- `models/*`: Typed model descriptors for shows, movies, and games
 
 See package READMEs for deep dives:
 
@@ -164,4 +164,3 @@ ruff check . --fix
 ## License
 
 License information is not specified yet. Add a LICENSE file to clarify usage terms.
-
