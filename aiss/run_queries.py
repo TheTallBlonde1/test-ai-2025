@@ -5,7 +5,8 @@ from rich.console import Console
 from .check_model import find_model_from_input
 from .models.shared import ResultType
 from .openai_direct import get_json_response, get_parsed_response, get_text_response
-from .pydantic_ai.pydantic_ai_agents import run_agents_parsed
+from .pydantic_ai.pydantic_ai_agents import find_model_from_input_pydantic
+from .pydantic_ai.pydantic_ai_std_parse import get_parsed_response as get_pydantic_parsed_response
 
 load_dotenv()
 
@@ -42,7 +43,19 @@ def run_the_query(
 
     # Delegate progress handling to sub-functions
     if is_pydantic:
-        run_agents_parsed(input_text, console)
+        if not result_type:
+            result_type = ResultType.PARSED
+        if isinstance(result_type, str):
+            result_type = ResultType(result_type.lower())
+        if result_type != ResultType.PARSED:
+            console.print("[bold red]Error:[/bold red] The Pydantic AI backend currently supports only 'parsed' mode.")
+            return
+
+        model_type_result = find_model_from_input_pydantic(input_text, console)
+        if model_type_result is None:
+            console.print(f"[red]Failed to determine model type for input '{input_text}'[/red]")
+            return
+        get_pydantic_parsed_response(model_type_result, console)
         return
 
     if not result_type:

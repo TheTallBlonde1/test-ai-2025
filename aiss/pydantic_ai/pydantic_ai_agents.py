@@ -39,7 +39,10 @@ T = TypeVar("T", bound=ModelFormatProtocol)
 
 
 def _provider_model_name() -> str:
-    base = os.getenv("OPENAI_MODEL_NAME", "gpt-5-mini").strip()
+    base = os.getenv("PYDANTIC_AI_MODEL_NAME") or os.getenv("OPENAI_MODEL_NAME", "gpt-5-mini")
+    base = base.strip()
+    if base == "test":
+        return base
     return base if ":" in base else f"openai:{base}"
 
 
@@ -47,7 +50,7 @@ def _provider_model_name() -> str:
 class DetectionOutput(BaseModel):
     """Pydantic output for model detection agent."""
 
-    model_type: str = Field(description="Detected model type key; must be one of ModelType.registry() keys")
+    model_type: ModelType = Field(description="Detected model type key; must be one of ModelType.registry() keys")
     formatted_name: str = Field(description="Normalized name/title for the work")
     description: str = Field(description="Short description of the work")
     additional_info: list[str] | None = Field(default=None, description="Optional extra hints like year, platform, etc.")
@@ -55,6 +58,44 @@ class DetectionOutput(BaseModel):
 
 def _detection_instructions() -> str:
     return f"You are an expert classifier for entertainment content (shows, movies, games).\nGiven the user's text, select the single best model type from the allowed options and normalize the title.\nRespond ONLY with the structured fields required.\n\nAllowed model types are: {ModelType.formatted_options()}\nDetails by type:{ModelType.instruction_listing()}\n"
+
+
+def find_model_from_input_pydantic(
+    input_text: str,
+    console: Console,
+) -> Optional[ModelTypeInput]:
+    """Use a typed Pydantic AI agent to classify the input text."""
+
+    if Agent is None:  # pragma: no cover - tests patch Agent
+        console.print("[red]Pydantic AI is not installed. Install `pydantic-ai` to run this helper.[/red]")
+        return None
+
+    detection_agent = Agent(
+        _provider_model_name(),
+        output_type=DetectionOutput,
+        system_prompt=_detection_instructions(),
+    )
+
+    try:
+        det = detection_agent.run_sync(input_text)
+    except Exception as exc:  # pragma: no cover - defensive
+        console.print(f"[red]Pydantic AI detection failed: {exc}[/red]")
+        return None
+
+    det_out = cast(DetectionOutput, getattr(det, "output", None))
+    if det_out is None:
+        console.print("[red]Failed to parse model type from input[/red]")
+        return None
+
+    console.rule(f"[bold cyan]Model Type: {det_out.model_type}")
+    console.print("\n")
+
+    return ModelTypeInput(
+        model_type=det_out.model_type,
+        description=det_out.description.strip(),
+        formatted_name=det_out.formatted_name.strip(),
+        additional_info=det_out.additional_info or None,
+    )
 
 
 # ---------- Wikipedia Agent ----------
@@ -179,21 +220,18 @@ def run_agents_parsed(input_text: str, console: Console) -> Optional[T]:
         task = progress.add_task("Detecting model type", total=total_steps)
 
         # 1) Detection
-        detection_agent = Agent(provider_model, output_type=DetectionOutput, instructions=_detection_instructions())
+        detection_agent = Agent(provider_model, output_type=DetectionOutput, system_prompt=_detection_instructions())
         det = detection_agent.run_sync(input_text)
         det_out = cast(DetectionOutput, det.output)
         progress.update(task, description="Validating model type", advance=1)
 
         # Validate and build ModelTypeInput
-        mt_key = det_out.model_type.strip().lower()
-        model_cls_map = ModelType.registry()
-        if mt_key not in model_cls_map:
-            console.print(f"[red]Unknown detected model type: {mt_key!r}[/red]")
+        if det_out.model_type.value not in ModelType.registry():
+            console.print(f"[red]Unknown detected model type: {det_out.model_type.value!r}[/red]")
             return None
 
-        model_type = ModelType(mt_key)
         model_type_input = ModelTypeInput(
-            model_type=model_type,
+            model_type=det_out.model_type,
             description=det_out.description.strip(),
             formatted_name=det_out.formatted_name.strip(),
             additional_info=det_out.additional_info or None,
@@ -201,13 +239,13 @@ def run_agents_parsed(input_text: str, console: Console) -> Optional[T]:
 
         # 2) Wikipedia
         progress.update(task, description="Fetching Wikipedia summary", advance=1)
-        wikipedia_agent = Agent(provider_model, output_type=WikipediaOutput, instructions=WIKIPEDIA_AGENT_PROMPT)
+        wikipedia_agent = Agent(provider_model, output_type=WikipediaOutput, system_prompt=WIKIPEDIA_AGENT_PROMPT)
         wiki_prompt = f"Title: {model_type_input.formatted_name}\nShort description: {model_type_input.description}"
         wiki = wikipedia_agent.run_sync(wiki_prompt)
         wikipedia_summary = cast(WikipediaOutput, wiki.output).summary
 
         # 3) Domain specialists (5 sequential)
-        domain = _domain_for_model(model_type)
+        domain = _domain_for_model(model_type_input.model_type)
         roles = {
             "History": _specialist_instructions("History", domain),
             "Research": _specialist_instructions("Research", domain),
@@ -218,7 +256,7 @@ def run_agents_parsed(input_text: str, console: Console) -> Optional[T]:
         notes: dict[str, str] = {}
         for key, instr in roles.items():
             progress.update(task, description=f"{key} note", advance=1)
-            agent = Agent(provider_model, output_type=str, instructions=instr)
+            agent = Agent(provider_model, output_type=str, system_prompt=instr)
             r = agent.run_sync(f"Work: {model_type_input.formatted_name}\nContext: {model_type_input.description}\nIf useful, consider year/platform in: {model_type_input.additional_info}")
             notes[key] = cast(str, r.output)
 
@@ -231,7 +269,7 @@ def run_agents_parsed(input_text: str, console: Console) -> Optional[T]:
             wikipedia_summary=wikipedia_summary,
             specialist_notes=notes,
         )
-        formatting_agent = Agent(provider_model, output_type=input_model, instructions=final_instructions)
+        formatting_agent = Agent(provider_model, output_type=input_model, system_prompt=final_instructions)
         prompt = input_model.get_user_prompt(model_type_input.formatted_name)
         try:
             result = formatting_agent.run_sync(prompt)

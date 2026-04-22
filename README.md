@@ -2,6 +2,8 @@
 
 Modern Python toolkit that classifies entertainment topics (shows, movies, games) and queries OpenAI to produce rich, structured outputs. It supports three flows out of the box: parsed (typed models), JSON (schema-first), and plain text, optionally augmented with Wikipedia context for higher fidelity.
 
+The parsed flow also includes a refreshed Pydantic AI path built around typed agents. It now supports the latest Pydantic AI agent configuration style and can be smoke-tested locally with Pydantic AI's built-in `test` model.
+
 ## Table of contents
 
 - [Overview](#overview)
@@ -110,12 +112,27 @@ The code uses `python-dotenv` to load `.env` automatically.
 Run the demo CLI to classify and query a topic:
 
 ```pwsh
-python main.py "Breaking Bad" --mode parsed
-python main.py "The Matrix" --mode json
-python main.py "Doom Eternal" --mode text
+python main.py "Breaking Bad" --mode parsed --api pydantic
+python main.py "The Matrix" --mode json --api openai
+python main.py "Doom Eternal" --mode text --api openai
 ```
 
 Modes: `parsed`, `json`, `text`.
+
+`--api pydantic` currently supports `parsed` mode. `--api openai` supports `parsed`, `json`, and `text`.
+
+### Pydantic AI smoke mode
+
+If you want to exercise the latest Pydantic AI flow without an API key, point the backend at Pydantic AI's built-in `test` model:
+
+```pwsh
+$env:PYDANTIC_AI_MODEL_NAME = "test"
+python main.py "Breaking Bad" --mode parsed --api pydantic
+python main.py "The Matrix" --mode parsed --api pydantic
+python main.py "Doom Eternal" --mode parsed --api pydantic
+```
+
+This smoke mode validates the end-to-end agent wiring and structured rendering without making live model calls.
 
 ### Python API
 
