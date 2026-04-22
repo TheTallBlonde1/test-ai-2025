@@ -2,17 +2,19 @@ from unittest.mock import Mock, patch
 
 from rich.console import Console
 
+from aiss.models.shared import ModelType
+
 
 def test_agents_flow_success():
     from aiss.models.shows.drama_model import DramaShowInfo
-    from aiss.pydantic_ai.pydantic_ai_agents import run_agents_parsed
+    from aiss.pydantic_ai.pydantic_ai_agents import find_model_from_input_pydantic, run_agents_parsed
 
     console = Console()
 
     # Detection output
     detection_output = Mock()
     detection_output.output = Mock(
-        model_type="drama",
+        model_type=ModelType.DRAMA,
         formatted_name="Test Show",
         description="A test drama show",
         additional_info=["2024"],
@@ -45,6 +47,12 @@ def test_agents_flow_success():
     parsed_instance.render.assert_called_once()
     assert hasattr(result, "wikipedia_summary")
 
+    with patch("aiss.pydantic_ai.pydantic_ai_agents.Agent", return_value=Mock(run_sync=Mock(return_value=detection_output))):
+        detection_result = find_model_from_input_pydantic("Detect this: Test Show", console)
+    assert detection_result is not None
+    assert detection_result.model_type == ModelType.DRAMA
+    assert detection_result.formatted_name == "Test Show"
+
 
 def test_agents_flow_unknown_type():
     from aiss.pydantic_ai.pydantic_ai_agents import run_agents_parsed
@@ -54,7 +62,7 @@ def test_agents_flow_unknown_type():
     # Detection outputs an unknown type
     detection_output = Mock()
     detection_output.output = Mock(
-        model_type="unknown_type",
+        model_type=Mock(value="unknown_type"),
         formatted_name="X",
         description="Y",
         additional_info=None,

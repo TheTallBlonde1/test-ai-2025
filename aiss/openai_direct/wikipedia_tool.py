@@ -45,18 +45,14 @@ def build_wikipedia_topic_context(
 
     topic_base = (model_type_result.formatted_name or "").strip()
     if not topic_base:
-        return ""
-
-    wikipedia_topic = topic_base
-    if additional_str:
-        wikipedia_topic = f"{topic_base} ({description} / {key_trait} / {additional_str})".strip()
+        return "", ""
 
     try:
         wikipedia_summary = summary(f"{model_type_result.formatted_name}: {model_type_result.description}", sentences=10)
         return wikipedia_summary, ",".join(parts)
 
-    except Exception as e:
-        print(f"Error fetching Wikipedia summary for topic '{wikipedia_topic}': {e}")
+    except Exception:
+        return "", ",".join(parts)
 
 
 def augment_prompt_with_wikipedia_context(base_prompt: str, wikipedia_summary: str, context: str) -> str:

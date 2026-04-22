@@ -110,7 +110,7 @@ class TestBuildWikipediaTopicContext:
         assert "Additional Info" in context
 
     def test_build_context_empty_formatted_name(self):
-        """Test building context with empty formatted name returns empty string."""
+        """Test building context with empty formatted name returns an empty tuple payload."""
         model_type_result = ModelTypeInput(
             model_type="test",
             description="Empty test",
@@ -119,7 +119,7 @@ class TestBuildWikipediaTopicContext:
 
         result = build_wikipedia_topic_context(MockModelFormat, model_type_result)
 
-        assert result == ""
+        assert result == ("", "")
 
     def test_build_context_whitespace_formatted_name(self):
         """Test building context with whitespace-only formatted name."""
@@ -131,10 +131,10 @@ class TestBuildWikipediaTopicContext:
 
         result = build_wikipedia_topic_context(MockModelFormat, model_type_result)
 
-        assert result == ""
+        assert result == ("", "")
 
     @patch("aiss.openai_direct.wikipedia_tool.summary")
-    def test_build_context_wikipedia_exception(self, mock_summary, capsys):
+    def test_build_context_wikipedia_exception(self, mock_summary):
         """Test handling Wikipedia API exception."""
         mock_summary.side_effect = Exception("Wikipedia API Error")
 
@@ -146,13 +146,10 @@ class TestBuildWikipediaTopicContext:
 
         result = build_wikipedia_topic_context(MockModelFormat, model_type_result)
 
-        # Function returns None on exception (no return statement in except block)
-        assert result is None
-
-        # Check error was printed
-        captured = capsys.readouterr()
-        assert "Error fetching Wikipedia summary" in captured.out
-        assert "Wikipedia API Error" in captured.out
+        assert result == (
+            "",
+            "Title: Nonexistent Article,Format: TestModel,Key Trait: test_trait,Description: Test Description",
+        )
 
     @patch("aiss.openai_direct.wikipedia_tool.summary")
     def test_build_context_with_none_additional_info(self, mock_summary):

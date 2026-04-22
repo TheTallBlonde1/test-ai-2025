@@ -42,7 +42,10 @@ def _provider_model_name() -> str:
     by the OpenAI SDK helpers, e.g. "gpt-5-mini" becomes "openai:gpt-5-mini".
     """
 
-    base = os.getenv("OPENAI_MODEL_NAME", "gpt-5-mini").strip()
+    base = os.getenv("PYDANTIC_AI_MODEL_NAME") or os.getenv("OPENAI_MODEL_NAME", "gpt-5-mini")
+    base = base.strip()
+    if base == "test":
+        return base
     # If the user already supplied a provider prefix (e.g., "openai:gpt-4o-mini"),
     # pass it through unchanged. Otherwise, assume OpenAI.
     return base if ":" in base else f"openai:{base}"
@@ -98,7 +101,7 @@ def get_parsed_response(model_type_input: ModelTypeInput, console: Console) -> O
             return None
 
         progress.update(task, description="Running Pydantic AI agent", advance=1)
-        agent = Agent(provider_model, output_type=input_model, instructions=instructions)
+        agent = Agent(provider_model, output_type=input_model, system_prompt=instructions)
 
         # Run synchronously to mirror existing OpenAI helper API
         try:

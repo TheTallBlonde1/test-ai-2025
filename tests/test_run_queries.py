@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from aiss.models.shared import ModelTypeInput, ResultType
+from aiss.models.shared import ModelType, ModelTypeInput, ResultType
 from aiss.run_queries import run_the_query
 
 
@@ -276,7 +276,7 @@ class TestRunTheQuery:
         mock_client.responses.parse.return_value = mock_response
 
         model_result = ModelTypeInput(
-            model_type="movie",
+            model_type=ModelType.MOVIE,
             description="Test movie content",
             formatted_name="Test Movie",
         )
@@ -310,6 +310,33 @@ class TestRunTheQuery:
         run_the_query("Complex Movie", ResultType.PARSED)
 
         mock_get_parsed.assert_called_once()
+
+    @patch("aiss.run_queries.get_pydantic_parsed_response")
+    @patch("aiss.run_queries.find_model_from_input_pydantic")
+    def test_run_query_pydantic_parsed_mode(self, mock_find_model_pydantic, mock_get_pydantic_parsed):
+        """Test running query in Pydantic AI parsed mode."""
+        model_result = ModelTypeInput(
+            model_type="drama",
+            description="A test show",
+            formatted_name="Test Show",
+        )
+        mock_find_model_pydantic.return_value = model_result
+
+        run_the_query("Test Show", ResultType.PARSED, "pydantic")
+
+        mock_find_model_pydantic.assert_called_once()
+        mock_get_pydantic_parsed.assert_called_once()
+
+    def test_run_query_pydantic_non_parsed_mode(self):
+        """Test Pydantic AI backend rejects unsupported modes."""
+        with patch("aiss.run_queries.Console") as mock_console_class:
+            mock_console = Mock()
+            mock_console_class.return_value = mock_console
+
+            run_the_query("Test Show", ResultType.JSON, "pydantic")
+
+            mock_console.print.assert_called_once()
+            assert "Pydantic AI backend" in str(mock_console.print.call_args)
 
     @patch("aiss.run_queries.load_dotenv")
     def test_load_dotenv_called_on_import(self, mock_load_dotenv):
