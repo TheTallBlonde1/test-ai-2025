@@ -1,8 +1,12 @@
+from anthropic import Anthropic
 from dotenv import load_dotenv
 from openai import OpenAI
 from rich.console import Console
 
-from .check_model import find_model_from_input
+from .check_model import find_model_from_input, find_model_from_input_claude
+from .claude_direct import get_json_response as get_claude_json_response
+from .claude_direct import get_parsed_response as get_claude_parsed_response
+from .claude_direct import get_text_response as get_claude_text_response
 from .models.shared import ResultType
 from .openai_direct import get_json_response, get_parsed_response, get_text_response
 from .pydantic_ai.pydantic_ai_agents import find_model_from_input_pydantic
@@ -40,6 +44,7 @@ def run_the_query(
     # Normalize backend selection
     api = (api or "openai").strip().lower()
     is_pydantic = api in {"pydantic", "pydantic ai", "pydantic_ai", "pydantic-ai"}
+    is_claude = api in {"claude", "anthropic"}
 
     # Delegate progress handling to sub-functions
     if is_pydantic:
@@ -66,14 +71,21 @@ def run_the_query(
         console.print(f"[bold red]Error:[/bold red] Unknown mode '{result_type}'. Choose from 'parsed', 'json', or 'text'.")
         return
 
-    client = OpenAI()
-    model_type_result = find_model_from_input(input_text, client, console)
+    if is_claude:
+        client = Anthropic()
+        model_type_result = find_model_from_input_claude(input_text, client, console)
+        parsed_fn, json_fn, text_fn = get_claude_parsed_response, get_claude_json_response, get_claude_text_response
+    else:
+        client = OpenAI()
+        model_type_result = find_model_from_input(input_text, client, console)
+        parsed_fn, json_fn, text_fn = get_parsed_response, get_json_response, get_text_response
+
     if model_type_result is None:
         console.print(f"[red]Failed to determine model type for input '{input_text}'[/red]")
         return
     if result_type == ResultType.PARSED:
-        get_parsed_response(model_type_result, client, console)
+        parsed_fn(model_type_result, client, console)
     elif result_type == ResultType.JSON:
-        get_json_response(model_type_result, client, console)
+        json_fn(model_type_result, client, console)
     elif result_type == ResultType.TEXT:
-        get_text_response(model_type_result, client, console)
+        text_fn(model_type_result, client, console)

@@ -20,5 +20,6 @@
 
   "ruff.lint.enable": true,
   "ruff.fixAll": true,
-  "ruff.organizeImports": true
+  "ruff.organizeImports": true,
+  "python.terminal.useEnvFile": true
 }

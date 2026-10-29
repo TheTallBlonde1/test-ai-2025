@@ -48,6 +48,7 @@ The project is thoroughly tested and built for extension—add new formats by dr
  	- `run_the_query`: Orchestrates detection + chosen response flow
  	- `check_model.find_model_from_input`: Asks OpenAI to select the model type
  	- `openai_direct/*`: Implements the three response modes and Wikipedia tool
+ 	- `claude_direct/*`: The same three response modes using the Anthropic (Claude) SDK
  	- `models/*`: Typed model descriptors for shows, movies, and games
 
 See package READMEs for deep dives:
@@ -58,6 +59,7 @@ See package READMEs for deep dives:
 - [aiss/models/movies/](aiss/models/movies/README.md)
 - [aiss/models/shows/](aiss/models/shows/README.md)
 - [aiss/openai_direct/](aiss/openai_direct/README.md)
+- [aiss/claude_direct/](aiss/claude_direct/README.md)
 
 ## Tech stack
 
@@ -115,11 +117,14 @@ Run the demo CLI to classify and query a topic:
 python main.py "Breaking Bad" --mode parsed --api pydantic
 python main.py "The Matrix" --mode json --api openai
 python main.py "Doom Eternal" --mode text --api openai
+python main.py "The Godfather" --mode json --api claude
 ```
 
 Modes: `parsed`, `json`, `text`.
 
-`--api pydantic` currently supports `parsed` mode. `--api openai` supports `parsed`, `json`, and `text`.
+`--api pydantic` currently supports `parsed` mode. `--api openai` and `--api claude` support `parsed`, `json`, and `text`.
+
+Claude requires `ANTHROPIC_API_KEY` (env or `.env`). Set `ANTHROPIC_MODEL_NAME` to override the default model (`claude-sonnet-5-5`).
 
 ### Pydantic AI smoke mode
 
@@ -151,6 +156,7 @@ test-ai-2025/
 ├─ aiss/
 │  ├─ models/            # Typed model registry and categories
 │  ├─ openai_direct/     # Response flows + Wikipedia tool
+│  ├─ claude_direct/     # Claude response flows (parsed/json/text)
 │  ├─ run_queries.py     # Orchestrates detect + query
 │  ├─ check_model.py     # Model detection using OpenAI
 │  └─ utils.py           # Shared utilities

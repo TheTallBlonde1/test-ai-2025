@@ -47,7 +47,7 @@ if __name__ == "__main__":
     :return: None
 
     """
-    parser = argparse.ArgumentParser(description="Query show info via OpenAI or Pydantic AI and print pretty output")
+    parser = argparse.ArgumentParser(description="Query show info via OpenAI, Claude or Pydantic AI and print pretty output")
 
     parser.add_argument("input_text", nargs="?", help="First (default) input to query (positional)", default="Match of the Day shown on Saturdays on BBC One in the UK")
     parser.add_argument(
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--api",
         "-a",
-        choices=["openai", "pydantic"],
+        choices=["openai", "pydantic", "claude"],
         default="pydantic",
         help="Backend API to use (default: pydantic)",
     )
